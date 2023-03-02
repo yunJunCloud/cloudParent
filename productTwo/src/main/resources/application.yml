@@ -1,0 +1,19 @@
+server:
+  port: 8082
+spring:
+  application:
+    name: productTwo
+  cloud:
+    nacos:
+      discovery:
+        server-addr: 127.0.0.1:8848
+        username: nacos
+        password: nacos
+  rabbitmq:
+    host: 192.168.0.108
+    port: 5672
+    #virtual-host: /
+    #消息可靠性投递
+    #publisher-returns: true
+    publisher-confirm-type: CORRELATED
+

@@ -1,0 +1,20 @@
+server:
+  port: 9080
+spring:
+  application:
+    name: consumerOne
+
+  cloud:
+    nacos:
+      discovery:
+        server-addr: 127.0.0.1:8848
+        username: nacos
+        password: nacos
+  rabbitmq:
+    host: 192.168.0.108
+    port: 5672
+    listener:
+      direct:
+        acknowledge-mode: manual #开始手动确认消息
+        prefetch: 2
+
