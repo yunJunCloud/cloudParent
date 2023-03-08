@@ -9,7 +9,7 @@ import org.springframework.web.client.RestTemplate;
 
 @SpringBootApplication
 //进行包扫描
-//@ComponentScan(basePackages = {"com.yunjun.cloudcommon"})
+@ComponentScan(basePackages = {"com.example.yunjunspringbootstarter","com.yunjun.consumerone","com.yunjun.cloudcommon"})
 public class ConsumerOneApplication {
 
     public static void main(String[] args) {

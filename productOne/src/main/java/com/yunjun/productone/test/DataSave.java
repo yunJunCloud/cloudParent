@@ -1,9 +1,12 @@
-package com.yunjun.cloudcommon.model;
+package com.yunjun.productone.test;
 
 import java.io.*;
 import java.util.ArrayList;
-import java.util.HashMap;
+import java.util.Queue;
+import java.util.Timer;
+import java.util.TimerTask;
 import java.util.concurrent.ConcurrentHashMap;
+import java.util.concurrent.ConcurrentLinkedQueue;
 
 /**
  * 面试题：我们知道文件存储可以存储一些数据，我们现在想要利用文件存储的方法，来构建一类类似于redis的持久化存储类。
@@ -17,14 +20,15 @@ import java.util.concurrent.ConcurrentHashMap;
  */
 public class DataSave {
 
-    private static ConcurrentHashMap<Object,Object> dataMap  = new ConcurrentHashMap<Object,Object>();
+    public static ConcurrentHashMap<Object,Object> dataMap  = new ConcurrentHashMap<Object,Object>();
+    public static  Queue<Node> queue = new ConcurrentLinkedQueue<>();
     private final static String DATA_PATH = "data.bat";
 
     //初始化加载数据到map中提高查询效率
     static {
-        Node  node = (Node) readObjectFromFile();
-        if(null!=node){
-            dataMap.put(node.key,node);
+        Node node = (Node) readObjectFromFile();
+        if(null!=node) {
+            dataMap.put(node.key, node);
         }
     }
     //请实现持久化存储函数（使用文件存储相关方法）
@@ -38,16 +42,19 @@ public class DataSave {
         /**
          * 你的代码
          */
-        Node node;
-        if(0 != expire){
-           Long expireTime = System.currentTimeMillis() + expire*1000L;
-           node = new Node(key,expireTime,s);
-       }else {
-            node = new Node(key,s);
+        /**
+         * 1、先将数据存储到缓存map中去（类似aof）
+         * 2、定时存map中将数据持久化到文件中(rdb)
+         */
+        Node node = new Node(key,s);
+        if(expire > 0){
+            //设置过期时间
+            node.setExpire(System.currentTimeMillis() + expire*1000L);
         }
         dataMap.put(key,node);
-        //应该写定时任务后台写数据到文件去持久化
-        writeObjectToFile(node);
+        queue.add(node);
+        //后台定时任务去执行
+        //writeObjectToFile(node);
     }
 
     //请实现持久化数据的取出
@@ -61,12 +68,21 @@ public class DataSave {
          * 你的代码
          */
         Node node = (Node) dataMap.get(key);
-        // 判断是否过期
-        if(null!=node){
-            if ( node.expire != null && System.currentTimeMillis() > node.expire) {
-                dataMap.remove(key);
+        if(null != node.expire){
+            if(-1 == node.expire){
+                //已过期的
                 return null;
+            }else {
+                //设置了过期时间 判断是否已到期
+                if (System.currentTimeMillis() <= node.expire) {
+                    return node.value;
+                }
+                //采用惰性删除(过期时间未-1 表示删除)
+                node.setExpire(-1L);
+                dataMap.put(key, node);
+                queue.add(node);
             }
+        }else {
             return node.value;
         }
         return null;
@@ -75,21 +91,17 @@ public class DataSave {
     public static void writeObjectToFile(Object obj)
     {
         File file =new File(DATA_PATH);
-
         FileOutputStream out;
         try {
-            if(!file.exists()){
-                file.createNewFile();
-            }
             out = new FileOutputStream(file);
             ObjectOutputStream objOut=new ObjectOutputStream(out);
             objOut.writeObject(obj);
             objOut.flush();
             objOut.close();
-            //System.out.println("write object success!");
+           // System.out.println("write object success!");
         } catch (Exception e) {
-           // System.out.println("write object failed");
-           // e.printStackTrace();
+            //System.out.println("write object failed");
+            e.printStackTrace();
         }
     }
 
@@ -97,42 +109,29 @@ public class DataSave {
     {
         Object temp=null;
         File file =new File(DATA_PATH);
+        if(!file.exists()){
+            return null;
+        }
         FileInputStream in;
         try {
             in = new FileInputStream(file);
             ObjectInputStream objIn=new ObjectInputStream(in);
             temp=objIn.readObject();
             objIn.close();
-           // System.out.println("read object success!");
+            //System.out.println("read object success!");
         } catch (IOException e) {
             //System.out.println("read object failed");
-           // e.printStackTrace();
+            e.printStackTrace();
         } catch (ClassNotFoundException e) {
-            //e.printStackTrace();
+            e.printStackTrace();
         }
         return temp;
     }
 
-    class Node implements Serializable{
-        String key;
-
-        Long expire;
-
-        Object value;
-
-        public Node(String key, Object value) {
-            this.key = key;
-            this.value = value;
-        }
-        public Node(String key, Long expire, Object value) {
-            this.key = key;
-            this.expire = expire;
-            this.value = value;
-        }
-    }
-
     public static void main(String[] args) {
         unitest();
+        Timer timer = new Timer();
+        timer.schedule(new WriterObj(),0,2);
     }
 
     static void unitest()
@@ -187,10 +186,64 @@ public class DataSave {
     }
 }
 
+class WriterObj extends TimerTask{
+    @Override
+    public void run() {
+        Node poll = DataSave.queue.poll();
+        if(null!=poll && DataSave.dataMap.containsKey(poll.key)) {
+            DataSave.writeObjectToFile(DataSave.queue.poll());
+        }
+    }
+}
+class Node implements Serializable{
 
+    @Serial
+    private static final long serialVersionUID = 7135696493277822453L;
+    String key;
 
-class Student
+    Long expire;
+
+    Object value;
+
+    public Node(String key, Object value) {
+        this.key = key;
+        this.value = value;
+    }
+    public Node(String key, Long expire, Object value) {
+        this.key = key;
+        this.expire = expire;
+        this.value = value;
+    }
+
+    public String getKey() {
+        return key;
+    }
+
+    public void setKey(String key) {
+        this.key = key;
+    }
+
+    public Long getExpire() {
+        return expire;
+    }
+
+    public void setExpire(Long expire) {
+        this.expire = expire;
+    }
+
+    public Object getValue() {
+        return value;
+    }
+
+    public void setValue(Object value) {
+        this.value = value;
+    }
+}
+
+class Student implements Serializable
 {
+    @Serial
+    private static final long serialVersionUID = 7417175484581818150L;
     String name;
     int age;
     Clazz clazz;
@@ -202,7 +255,9 @@ class Student
     }
 }
 
-class Clazz {
+class Clazz implements Serializable {
+    @Serial
+    private static final long serialVersionUID = 540231296107348091L;
     String grade;
     int studentNumbers;
     int teacherNumbers;
@@ -215,7 +270,9 @@ class Clazz {
         this.school = school;
     }
 }
-class School {
+class School implements Serializable {
+    @Serial
+    private static final long serialVersionUID = 7239526057998847013L;
     String name;
     String address;
     public School(String name, String address)

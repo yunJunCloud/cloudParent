@@ -17,3 +17,8 @@ spring:
     #publisher-returns: true
     publisher-confirm-type: CORRELATED
 
+logging:
+  config: classpath:log4j2-spring.xml
+  level:
+    root: info
+

@@ -1,5 +1,5 @@
 server:
-  port: ${port:8081}
+  port: ${port:8088}
 spring:
   application:
     name: productOne
@@ -10,7 +10,7 @@ spring:
     driver-class-name: com.mysql.cj.jdbc.Driver
     username: root
     password: 123456
-    url: jdbc:mysql://*****:3609/yuncloud?useUnicode=true&characterEncoding=utf-8&serverTimezone=GMT
+    url: jdbc:mysql://www.yunjk.top:3609/yuncloud?useUnicode=true&characterEncoding=utf-8&serverTimezone=GMT
     type: com.alibaba.druid.pool.DruidDataSource
     # 连接池配置：
     druid:

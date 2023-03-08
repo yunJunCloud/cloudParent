@@ -1,5 +1,8 @@
 package com.yunjun.cloudcommon.model;
 
+import com.yunjun.cloudcommon.exception.BaseErrorInfo;
+import com.yunjun.cloudcommon.exception.CommonEum;
+
 /**
  * @PACKAGE_NAME: com.yunjun.productcommon.model
  * @NAME: RestResultUtils
@@ -9,14 +12,14 @@ package com.yunjun.cloudcommon.model;
  **/
 public class RestResultUtils {
     public static <T> RestResult<T> success(){
-        return RestResult.<T>builder().withCode(200).build();
+        return RestResult.<T>builder().withCode(CommonEum.SUCCESS.getResultCode()).build();
     }
     public static <T> RestResult<T> success(T data) {
-        return RestResult.<T>builder().withCode(200).withData(data).build();
+        return RestResult.<T>builder().withCode(CommonEum.SUCCESS.getResultCode()).withData(data).build();
     }
 
     public static <T> RestResult<T> success(String msg, T data) {
-        return RestResult.<T>builder().withCode(200).withMsg(msg).withData(data).build();
+        return RestResult.<T>builder().withCode(CommonEum.SUCCESS.getResultCode()).withMsg(CommonEum.SUCCESS.getResultMsg()).withData(data).build();
     }
 
 
@@ -25,11 +28,11 @@ public class RestResultUtils {
     }
 
     public static <T> RestResult<T> failed() {
-        return RestResult.<T>builder().withCode(500).build();
+        return RestResult.<T>builder().withCode(CommonEum.INTERNAL_SERVER_ERROR.getResultCode()).build();
     }
 
     public static <T> RestResult<T> failed(String errMsg) {
-        return RestResult.<T>builder().withCode(500).withMsg(errMsg).build();
+        return RestResult.<T>builder().withCode(CommonEum.INTERNAL_SERVER_ERROR.getResultCode()).withMsg(CommonEum.INTERNAL_SERVER_ERROR.getResultMsg()).build();
     }
 
     public static <T> RestResult<T> failed(int code, T data) {
@@ -42,5 +45,9 @@ public class RestResultUtils {
 
     public static <T> RestResult<T> failedWithMsg(int code, String errMsg) {
         return RestResult.<T>builder().withCode(code).withMsg(errMsg).build();
+    }
+
+    public static <T> RestResult<T> failedWithMsg(BaseErrorInfo baseErrorInfo) {
+        return RestResult.<T>builder().withCode(baseErrorInfo.getResultCode()).withMsg(baseErrorInfo.getResultMsg()).build();
     }
 }

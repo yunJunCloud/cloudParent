@@ -17,4 +17,7 @@ spring:
       direct:
         acknowledge-mode: manual #开始手动确认消息
         prefetch: 2
+  user:
+    test-name: "张三"
+    test-pass-word: "111"
 

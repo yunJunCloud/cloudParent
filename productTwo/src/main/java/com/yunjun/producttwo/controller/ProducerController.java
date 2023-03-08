@@ -2,6 +2,7 @@ package com.yunjun.producttwo.controller;
 
 import com.yunjun.cloudcommon.config.rabbit.RabbitConstant;
 import com.yunjun.cloudcommon.model.User;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.amqp.core.Message;
 import org.springframework.amqp.core.MessageProperties;
 import org.springframework.amqp.rabbit.core.RabbitTemplate;
@@ -21,12 +22,14 @@ import java.io.UnsupportedEncodingException;
  **/
 @RestController
 @RequestMapping("/producer")
+@Slf4j
 public class ProducerController {
     @Autowired
     private RabbitTemplate rabbitTemplate;
 
     @GetMapping("/helloSend")
     public void helloSend(String message) throws UnsupportedEncodingException {
+        log.info("这个简单工作模式的日志-----");
         //设置部分请求参数
         MessageProperties messageProperties = new MessageProperties();
         messageProperties.setContentType(MessageProperties.CONTENT_TYPE_TEXT_PLAIN);
